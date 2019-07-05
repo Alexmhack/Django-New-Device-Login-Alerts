@@ -2,8 +2,10 @@ from django.contrib.auth import user_logged_in
 from django.dispatch import receiver
 from django.template.loader import render_to_string
 from django.core.mail import EmailMessage
+from django.contrib.sessions.models import Session
 
 from .utils import get_client_ip
+from .models import UserSession
 
 # if users logins for the first time then a new UserSession object will be created
 @receiver(user_logged_in)
@@ -12,7 +14,7 @@ def send_new_device_alert(sender, user, request, **kwargs):
 	Session.objects.filter(usersession__user=user).delete()
 
 	# save current session
-	user.session.save()
+	request.session.save()
 
 	try:
 		message = render_to_string('candidates/emails/welcome_email.html', {
@@ -32,6 +34,9 @@ def send_new_device_alert(sender, user, request, **kwargs):
 		print(str(e))
 
 	user_session = UserSession.objects.get_or_create(user=user)
-	user_session.session = user.session
-	user_session.ip_address = get_client_ip(request)
-	user_session.save()
+	if not user_session[1]:
+		user_session = UserSession.objects.get(user=user)
+		session = Session.objects.get(pk=request.session.session_key)
+		user_session.session = session
+		user_session.ip_address = get_client_ip(request)
+		user_session.save()
