@@ -1,0 +1,22 @@
+<form action="." method="post">
+	{% csrf_token %}
+	{{ form }}
+	<button type="submit">Save</button>
+	<button class='js-captcha-refresh'>refresh</button>
+</form>
+
+{{ form.media }}
+
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
+
+<script type="text/javascript">
+	
+	$('.js-captcha-refresh').click(function () {
+	    $.getJSON("/captcha/refresh/", function (result) {
+	        $('.captcha').attr('src', result['image_url']);
+	        $('#id_captcha_0').val(result['key'])
+	    });
+
+	    return false;
+	});
+</script>
